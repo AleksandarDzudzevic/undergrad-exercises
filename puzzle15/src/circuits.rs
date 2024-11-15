@@ -12,6 +12,7 @@ fn build_counter_0(ctx: &mut Context, width: WidthInt) -> TransitionSystem {
     // define how the count gets updated:
     // count' := count + 1
     // `ctx.build` is used here, because we are building a nested expression
+    //c.one(width) here serves as a reference to a value of 1 and add just adds that to the value that is referenced by expr ref count.
     let count_next = ctx.build(|c| c.add(count, c.one(width)));
 
     // define the initial value of our count
@@ -47,11 +48,30 @@ fn build_counter_1(ctx: &mut Context, width: WidthInt, max_value: u64) -> Transi
     // define how the count gets updated:
     // count' := count + 1
     // `ctx.build` is used here, because we are building a nested expression
-    let count_next = todo!("you only need to add code here!");
+    let count_init = ctx.zero(width);
+    let count_max: ExprRef = ctx.bv_lit(&BitVecValue::from_u64(max_value, width));
+    
+    //Played around to see how different comtext methods work, this count_next also works it is 
+    //just more complicated for no reason
+    
+    // let count_next = ctx.build(|c| {
+    //     c.bv_ite(
+    //         c.bv_equal(c.sub(count_max, count), count_init),
+    //         count,
+    //         c.add(count, c.one(width)),
+    //     )
+    // });
+
+    let count_next = ctx.build(|c| {
+        c.bv_ite(
+            c.bv_equal(count, count_max),
+            count,
+            c.add(count, c.one(width)),
+        )
+    });
 
     // define the initial value of our count
     let count_init = ctx.zero(width);
-
     // define the transition system (the abstract circuit representation)
     let mut sys = TransitionSystem::new("counter".to_string());
     sys.add_state(

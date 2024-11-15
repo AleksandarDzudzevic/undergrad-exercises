@@ -61,3 +61,16 @@
 - Started working on chapeter 15: Smart Pointers, of the Rust Book
 - started arc.rs, the first exercise in chapter 19 (smarter pointers)
 - Pushed the progresss on Github
+
+### Research Day 6: Nov 15th 2024
+
+- Learned about patronus:Context application
+- Learned how rust overcomes lack over garbage collecting and avoids empty chunks of memory (even how theortically one could make their own garbage collector by copying the expr vec with only relevant ones and thus getting rid off the ones which we want to deallocate)
+- Learned about ctx.symbol, ctx.build,
+- Started working on puzzle 2 circuits.rs
+- Learned about nested expressions and their need for handling conditional updates or constraints symbolically (needed for incrementing only until the max value isn’t reached)
+- Started working on build_counter_1 method
+- Finished build_counter_1 method
+- Added an extra soltuion to the original build-counter_1 to practice methods from context more (commente out since it is unnecessarily more complicated)
+- Weekly group meeting
+- Pushed progress on Github
