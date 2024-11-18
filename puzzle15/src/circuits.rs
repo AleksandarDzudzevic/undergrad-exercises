@@ -50,10 +50,10 @@ fn build_counter_1(ctx: &mut Context, width: WidthInt, max_value: u64) -> Transi
     // `ctx.build` is used here, because we are building a nested expression
     let count_init = ctx.zero(width);
     let count_max: ExprRef = ctx.bv_lit(&BitVecValue::from_u64(max_value, width));
-    
-    //Played around to see how different comtext methods work, this count_next also works it is 
+
+    //Played around to see how different comtext methods work, this count_next also works it is
     //just more complicated for no reason
-    
+
     // let count_next = ctx.build(|c| {
     //     c.bv_ite(
     //         c.bv_equal(c.sub(count_max, count), count_init),
@@ -94,11 +94,22 @@ fn build_counter_2(ctx: &mut Context, width: WidthInt, max_value: u64) -> Transi
 
     // NEW: define a symbol for the input
     let en = ctx.bv_symbol("en", 1);
+    let count_max: ExprRef = ctx.bv_lit(&BitVecValue::from_u64(max_value, width));
 
     // define how the count gets updated:
     // count' := count + 1
     // `ctx.build` is used here, because we are building a nested expression
-    let count_next = todo!("you only need to add code here!");
+    let count_next = ctx.build(|c| {
+        c.bv_ite(
+            c.bv_equal(en, c.one(1)),
+            c.bv_ite(
+                c.bv_equal(count, count_max),
+                count,
+                c.add(count, c.one(width)),
+            ),
+            count,
+        )
+    });
 
     // define the initial value of our count
     let count_init = ctx.zero(width);
@@ -167,8 +178,51 @@ fn build_puzzle_15(ctx: &mut Context) -> (TransitionSystem, Vec<ExprRef>, ExprRe
             let position = positions[pos_to_index(x, y)];
 
             // TODO: current we just assign the old tile value, how do we correctly compute the next tile value?
-
-            let position_next = position;
+            let mut cond: Vec<(ExprRef, ExprRef)> = vec![];
+            if x > 0 {
+                cond.push((
+                    ctx.and(move_left_to_right, is_empty[pos_to_index(x, y)]),
+                    positions[pos_to_index(x - 1, y)],
+                ));
+                cond.push((
+                    ctx.and(move_right_to_left, is_empty[pos_to_index(x - 1, y)]),
+                    ctx.zero(4),
+                ));
+            }
+            if x < 3 {
+                cond.push((
+                    ctx.and(move_right_to_left, is_empty[pos_to_index(x, y)]),
+                    positions[pos_to_index(x + 1, y)],
+                ));
+                cond.push((
+                    ctx.and(move_left_to_right, is_empty[pos_to_index(x + 1, y)]),
+                    ctx.zero(4),
+                ));
+            }
+            if y > 0 {
+                cond.push((
+                    ctx.and(move_top_to_bottom, is_empty[pos_to_index(x, y)]),
+                    positions[pos_to_index(x, y - 1)],
+                ));
+                cond.push((
+                    ctx.and(move_bottom_to_top, is_empty[pos_to_index(x, y - 1)]),
+                    ctx.zero(4),
+                ));
+            }
+            if y < 3 {
+                cond.push((
+                    ctx.and(move_bottom_to_top, is_empty[pos_to_index(x, y)]),
+                    positions[pos_to_index(x, y + 1)],
+                ));
+                cond.push((
+                    ctx.and(move_top_to_bottom, is_empty[pos_to_index(x, y + 1)]),
+                    ctx.zero(4),
+                ));
+            }
+            let position_next = ctx.build(|c| {
+                cond.iter()
+                    .fold(position, |val, (cond, value)| c.bv_ite(*cond, *value, val))
+            });
             positions_next.push(position_next);
         }
     }

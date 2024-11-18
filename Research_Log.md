@@ -74,3 +74,13 @@
 - Added an extra soltuion to the original build-counter_1 to practice methods from context more (commente out since it is unnecessarily more complicated)
 - Weekly group meeting
 - Pushed progress on Github
+
+## Research Day 7: Nov 18th 2024
+
+- Started working on the build_counter_2 method
+- Finished build_counter_2 method and tested it
+- Started on the puzzle 15 method that uses circuits to simulate the tile game, and learned about unwrap_or method in rust
+- Attempted the nested iter approach but it didnt work
+- Started on the condition vector approach
+- finished the condition push if statements
+- Finished the method (left to write tests and see if it is correct)
