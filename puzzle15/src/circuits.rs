@@ -220,8 +220,12 @@ fn build_puzzle_15(ctx: &mut Context) -> (TransitionSystem, Vec<ExprRef>, ExprRe
                 ));
             }
             let position_next = ctx.build(|c| {
-                cond.iter()
-                    .fold(position, |val, (cond, value)| c.bv_ite(*cond, *value, val))
+                let mut result = position;
+                for (condition, value) in cond.iter() {
+                    //Idea is to basically go through all conditions in the cond vector and if condition holds assign the new value otherwise keep the result
+                    result = c.bv_ite(*condition, *value, result);
+                }
+                result
             });
             positions_next.push(position_next);
         }
@@ -247,6 +251,8 @@ fn build_puzzle_15(ctx: &mut Context) -> (TransitionSystem, Vec<ExprRef>, ExprRe
 
 #[cfg(test)]
 mod tests {
+
+    use patronus::sim;
 
     use super::*;
 
@@ -346,13 +352,59 @@ state count : bv<2>
         }
     }
 
+    fn move_to_code(m: Move) -> u64 {
+        match m {
+            Move::LeftToRight => 0,
+            Move::RightToLeft => 1,
+            Move::TopToBottom => 2,
+            Move::BottomToTop => 3,
+        }
+    }
     #[test]
     fn test_puzzle15() {
         let mut ctx = Context::default();
         let (sys, positions, mov) = build_puzzle_15(&mut ctx);
         // we print out the puzzle to help you debug
         println!("{}", sys.serialize_to_str(&ctx));
+        let mut simulator = Interpreter::new(&ctx, &sys);
+        simulator.init(); //loads values initially assigned
 
-        todo!("write a test that checks the positions after a move")
+        let initial_st = GameState::default();
+
+        for x in 0..4 {
+            for y in 0..4 {
+                let pos_index = pos_to_index(x, y);
+                let pos_symbol = positions[pos_index];
+                let expected_value = initial_st.get(y, x).unwrap_or(0);
+                assert_eq!(
+                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
+                    expected_value as u64
+                );
+            }
+        }
+        let move_seq = [Move::LeftToRight, Move::LeftToRight, Move::TopToBottom];
+        for m in move_seq {
+            println!("doing move: {:?}", m);
+            let symbolic_move = BitVecValue::from_u64(move_to_code(m), 2);
+            simulator.set(mov, &symbolic_move);
+            simulator.step()
+        }
+        let exp_res = vec![1, 5, 9, 13, 2, 6, 0, 14, 3, 7, 10, 15, 4, 8, 11, 12]; //Ask about the LIFO issue on Monday!!!
+        for x in 0..4 {
+            for y in 0..4 {
+                let pos_index = pos_to_index(x, y);
+                let pos_symbol = positions[pos_to_index(y, x)];
+                let expected_value = exp_res[pos_index];
+                println!(
+                    "{}{}",
+                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
+                    expected_value
+                );
+                assert_eq!(
+                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
+                    expected_value
+                )
+            }
+        }
     }
 }

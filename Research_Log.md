@@ -84,3 +84,22 @@
 - Started on the condition vector approach
 - finished the condition push if statements
 - Finished the method (left to write tests and see if it is correct)
+
+## Research Day 8: Nov 22th 2024
+
+- Changed the value updating from using fold to traditional iterating using for loop and iter to go through all conditions add to vector for improved clarity of the code
+- Started writting test cases
+- Wrote test case to test the simulation of the method using conditionals
+- Started and finished Watching the video about lakeroad (FPGAs and reconfigurable hardware)
+- Learned basics what FPGA is how look up tables and registers work in it. (very basics)
+- Meeting with Josph regarding the Puddle Ave:
+  - Plan of Action:
+    - Try to establish step by step plan of action on how to work on the project
+    - Understand the code provided so far for puddle ave:
+      - Objective: keep Verilog and Architecture and transition all methods and other stuff written in Racket→ Rust
+      - Questions we discussed and have for the Monday meeting:
+        - Does that mean project is 1:1 transfering 13k Racket lines into rust to see if the performance improves while keeping all the functionality?
+        - Do we also need the Verilog_to_rust for the 58k automated lines they used?
+        - if so should the Verilog Code into Rust be doing same stuff that their python verilog→racket converter does.
+          What we covered:
+          puddle ave's main.rs code and understanding what code we need to further translate into Rust
