@@ -103,3 +103,22 @@
         - if so should the Verilog Code into Rust be doing same stuff that their python verilog→racket converter does.
           What we covered:
           puddle ave's main.rs code and understanding what code we need to further translate into Rust
+  ## Research Day 9: Nov 25th 2024
+  - Reading the lake road paper
+- Working on the plan for the Puddle ave
+  - Verilog→Btor2→ patronus (using yosus)
+  - Architecture descriptions from YAML→ Rust structs + implement the serde_yaml + parse it
+- Implement Game state formatting and display for easier debugging.
+- Fix the current method so that it does not act like a stack solution (problem was with the rows/columns).
+- Fixed the representation of the circuits→GameState by adding a helper method that transforms circuit to a board.
+- Passed the test case
+- Pushed the fixed code to github
+- Meeting about puddle ave with Dr.Laeufer & Joseph:
+  - make the modules
+  - Generate btor for the modules
+  - Load the files with patronus and display them.
+  - Load the transition system
+  - make a combined module tha takes (c,i,ok) with the same context. (always use the same context)
+  - Bounded module checking (patornus repository)
+- Patronus_to_btor2
+- context to file

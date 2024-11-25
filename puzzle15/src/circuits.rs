@@ -160,8 +160,8 @@ fn build_puzzle_15(ctx: &mut Context) -> (TransitionSystem, Vec<ExprRef>, ExprRe
     let mut positions_init = vec![];
     let mut is_empty = vec![];
     let init_state = GameState::default();
-    for x in 0..4 {
-        for y in 0..4 {
+    for y in 0..4 {
+        for x in 0..4 {
             let symbol = ctx.bv_symbol(&format!("pos_{x}_{y}"), 4);
             positions.push(symbol);
             let init_value = BitVecValue::from_u64(init_state.get(x, y).unwrap_or(0) as u64, 4);
@@ -173,8 +173,8 @@ fn build_puzzle_15(ctx: &mut Context) -> (TransitionSystem, Vec<ExprRef>, ExprRe
 
     // define the next state function for every position
     let mut positions_next = vec![];
-    for x in 0..4 {
-        for y in 0..4 {
+    for y in 0..4 {
+        for x in 0..4 {
             let position = positions[pos_to_index(x, y)];
 
             // TODO: current we just assign the old tile value, how do we correctly compute the next tile value?
@@ -360,6 +360,27 @@ state count : bv<2>
             Move::BottomToTop => 3,
         }
     }
+    impl GameState {
+        /// Creates a GameState from a circuit's simulation state.
+        pub fn from_circuit(ctx: &Context, positions: &[ExprRef], simulator: &Interpreter) -> Self {
+            let mut board = [[None; 4]; 4];
+            for x in 0..4 {
+                // Iterate columns first to match circuit's column-major
+                for y in 0..4 {
+                    // Assign to row-major GameState format
+                    let pos_index = y * 4 + x; // Use column-major indexing
+                    let value = simulator
+                        .get(positions[pos_index])
+                        .unwrap()
+                        .to_u64()
+                        .unwrap();
+                    board[x][y] = if value == 0 { None } else { Some(value as u8) };
+                }
+            }
+            GameState { board }
+        }
+    }
+
     #[test]
     fn test_puzzle15() {
         let mut ctx = Context::default();
@@ -369,42 +390,31 @@ state count : bv<2>
         let mut simulator = Interpreter::new(&ctx, &sys);
         simulator.init(); //loads values initially assigned
 
-        let initial_st = GameState::default();
+        let circuit_game_state = GameState::from_circuit(&ctx, &positions, &simulator);
+        let default_game_state = GameState::default();
+        print!("{}\n", circuit_game_state);
+        print!("{}\n", default_game_state);
+        assert_eq!(circuit_game_state, default_game_state);
 
-        for x in 0..4 {
-            for y in 0..4 {
-                let pos_index = pos_to_index(x, y);
-                let pos_symbol = positions[pos_index];
-                let expected_value = initial_st.get(y, x).unwrap_or(0);
-                assert_eq!(
-                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
-                    expected_value as u64
-                );
-            }
-        }
-        let move_seq = [Move::LeftToRight, Move::LeftToRight, Move::TopToBottom];
+        let move_seq = [Move::TopToBottom, Move::LeftToRight, Move::LeftToRight];
         for m in move_seq {
             println!("doing move: {:?}", m);
             let symbolic_move = BitVecValue::from_u64(move_to_code(m), 2);
             simulator.set(mov, &symbolic_move);
             simulator.step()
         }
-        let exp_res = vec![1, 5, 9, 13, 2, 6, 0, 14, 3, 7, 10, 15, 4, 8, 11, 12]; //Ask about the LIFO issue on Monday!!!
-        for x in 0..4 {
-            for y in 0..4 {
-                let pos_index = pos_to_index(x, y);
-                let pos_symbol = positions[pos_to_index(y, x)];
-                let expected_value = exp_res[pos_index];
-                println!(
-                    "{}{}",
-                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
-                    expected_value
-                );
-                assert_eq!(
-                    simulator.get(pos_symbol).unwrap().to_u64().unwrap(),
-                    expected_value
-                )
-            }
-        }
+        let expected_state = GameState {
+            board: [
+                [Some(1), Some(5), Some(9), Some(13)],
+                [Some(2), Some(6), None, Some(14)],
+                [Some(3), Some(7), Some(10), Some(15)],
+                [Some(4), Some(8), Some(11), Some(12)],
+            ],
+        };
+
+        let circuit_game_state = GameState::from_circuit(&ctx, &positions, &simulator);
+        println!("Final Circuit State:\n{}", circuit_game_state);
+        println!("Expected State:\n{}", expected_state);
+        assert_eq!(circuit_game_state, expected_state);
     }
 }
